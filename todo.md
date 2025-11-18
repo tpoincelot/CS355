@@ -1,7 +1,7 @@
 # Tetris TODO
 
 1. **Set up working curses loop**
-   - [ ] Create an init function to run all starting functions.
+   - [*] Create an init function to run all starting functions.
 
 2. **Represent game state in arrays**
    - [ ] Create 2D array of ints or chars (0 for empty, 1 for filled).
