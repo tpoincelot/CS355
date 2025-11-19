@@ -24,7 +24,6 @@ void draw_field(void) {
         for (int x = 0; x < WIDTH; x++) {
             addch('.');
         }
-        clrtoeol();
     }
 }
 
