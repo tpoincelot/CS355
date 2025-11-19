@@ -4,9 +4,10 @@
    - [x] Create an init function to run all starting functions.
 
 2. **Represent game state in arrays**
-   - [ ] Create 2D array of ints or chars (0 for empty, 1 for filled).
+   - [x] Create 2D array of ints or chars (0 for empty, 1 for filled).
    - [ ] (Optional) Add colors later.
-   - [ ] Start with one shape.
+   - [x] Start with one shape.
+   - [ ] Create a 3D array (or possibly 4D to track piece type) to track rotations of pieces(row, column).
    - [ ] Loop over field and put `.` for empty and `#` for filled.
    - [ ] Loop over shapes and draw at `(x, y)`.
 
