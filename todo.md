@@ -35,3 +35,5 @@
 
 6. **Add random pieces**
    - [ ] Randomly choose piece type when spawning a new piece.
+7. **Final touches**
+   - [ ] Fix spacing of play field.
