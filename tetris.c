@@ -144,7 +144,6 @@ void add_piece(int origin_x, const int shape[4][4], int shape_width, int shape_h
         }
     }
 
-    // Place the piece on the field
     for (int r = start_row; r < shape_height; r++) {
         for (int c = 0; c < shape_width; c++) {
             if (!shape[r][c]) {
@@ -157,6 +156,23 @@ void add_piece(int origin_x, const int shape[4][4], int shape_width, int shape_h
             }
         }
     }
+}
+
+// Function to check if a piece can be placed.
+int can_place(int x, int y, const int shape[4][4], int shape_width, int shape_height) {
+    for (int r = 0; r < shape_height; r++) {
+        for (int c = 0; c < shape_width; c++) {
+            if (shape[r][c]) {
+                int fx = x + c;
+                int fy = y + r;
+
+                if (fx < 0 || fx >= WIDTH || fy < 0 || fy >= HEIGHT || field[fy][fx]) {
+                    return 0;
+                }
+            }
+        }
+    }
+    return 1;
 }
 
 // TP Reset every cell in the playfield to empty.
@@ -187,20 +203,33 @@ void init_game(void) {
 }
 
 int main(void) {
-    srand((unsigned)time(NULL)); // If you don't use this the piece will be added in the same spot every run
+    srand((unsigned)time(NULL));
     init_game();
 
-    // TP Place the cube near the top center so the board can show a piece.
+    // Randomize the piece to be added
+    int random_piece_index = rand() % (sizeof(piece) / sizeof(piece[0]));
+    int random_rotation = rand() % 4;
+
     int piece_width = 4;
     int piece_height = 4;
-    int origin_x = rand() % (WIDTH - piece_width + 1); // Ensure the piece fits horizontally
-    add_piece(origin_x, piece[1][1], piece_width, piece_height);
+    int origin_x = WIDTH / 2 - piece_width / 2;
+    int origin_y = 0;
+
+    if (can_place(origin_x, origin_y, piece[random_piece_index][random_rotation], piece_width, piece_height)) {
+        add_piece(origin_x, piece[random_piece_index][random_rotation], piece_width, piece_height);
+        printf("Test Passed\n");
+    } else {
+        printf("Test Failed\n");
+    }
 
     draw_field();
     refresh();
+
+    // Main game loop
     while (1) {
         usleep(100000);
     }
+
     endwin();
     return 0;
 }

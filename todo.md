@@ -7,9 +7,9 @@
    - [x] Create 2D array of ints or chars (0 for empty, 1 for filled).
    - [ ] (Optional) Add colors later.
    - [x] Start with one shape.
-   - [ ] Create a 3D array (or possibly 4D to track piece type) to track rotations of pieces(row, column).
-   - [ ] Loop over field and put `.` for empty and `#` for filled.
-   - [ ] Loop over shapes and draw at `(x, y)`.
+   - [x] Create a 3D array (or possibly 4D to track piece type) to track rotations of pieces(row, column).
+   - [x] Loop over field and put `.` for empty and `#` for filled.
+   - [x] Loop over shapes and draw at `(x, y)`.
 
 3. **Implement movement, gravity, and collision checks**
    - [ ] Every N milliseconds the piece tries to move down by 1.
@@ -17,9 +17,10 @@
    - [ ] Create `lock_piece` function for when the piece can't move.
    - [ ] In the main loop, track time and:
      - [ ] Use `can_place` to decide whether to move the piece down.
-     - [ ] Otherwise call `lock_piece`.
+     - [ ] If place can't be moved use a flag to mark it as locked.
    - [ ] Add horizontal movement based on `KEY_LEFT` and `KEY_RIGHT`:
      - [ ] Change x value accordingly.
+   - [ ] For any reused code create functions (clear line).
 
 4. **Add line clearing and game over screen**
    - [ ] After `lock_piece`, for each row:
