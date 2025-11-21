@@ -9,7 +9,21 @@
 #define WIDTH 10
 #define HEIGHT 25
 
+// JT - adding in ANSI color codes for the tetris pieces
+#define RESET "\x1b[0m"
+#define RED "\x1b[31m"
+#define GREEN "\x1b[32m"
+#define YELLOW "\x1b[33m"
+#define BLUE "\x1b[34m"
+#define MAGENTA "\x1b[35m"
+#define CYAN "\x1b[36m"
+#define WHITE "\x1b[37m"
+
 #define RAND_MAX 9
+
+// JT - array of color strings
+const char *colors[] = {RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE};
+#define NUM_COLORS (sizeof(colors)/sizeof(colors[0]))
 
 // TP Field grid storing occupied cells (0 = empty, 1 = filled).
 static int field[HEIGHT][WIDTH];
@@ -128,7 +142,10 @@ static const int piece[][4][4][4] = {
 // };
 
 // TP Function that adds shape into the top of the field. Adjusted to skip empty rows at the top.
+//JT - add random color to each new piece
 void add_piece(int origin_x, const int shape[4][4], int shape_width, int shape_height) {
+    int color_id = (rand() % NUM_COLORS) + 1; //JT - pick random color
+
     int start_row = 0;
     for (int r = 0; r < shape_height; r++) {
         int is_empty = 1;
@@ -144,6 +161,7 @@ void add_piece(int origin_x, const int shape[4][4], int shape_width, int shape_h
         }
     }
 
+    // Place the piece on the field
     for (int r = start_row; r < shape_height; r++) {
         for (int c = 0; c < shape_width; c++) {
             if (!shape[r][c]) {
@@ -152,27 +170,10 @@ void add_piece(int origin_x, const int shape[4][4], int shape_width, int shape_h
             int fx = origin_x + c;
             int fy = r - start_row;
             if (fx >= 0 && fx < WIDTH && fy >= 0 && fy < HEIGHT) {
-                field[fy][fx] = 1;
+                field[fy][fx] = color_id; //JT - store color id
             }
         }
     }
-}
-
-// Function to check if a piece can be placed.
-int can_place(int x, int y, const int shape[4][4], int shape_width, int shape_height) {
-    for (int r = 0; r < shape_height; r++) {
-        for (int c = 0; c < shape_width; c++) {
-            if (shape[r][c]) {
-                int fx = x + c;
-                int fy = y + r;
-
-                if (fx < 0 || fx >= WIDTH || fy < 0 || fy >= HEIGHT || field[fy][fx]) {
-                    return 0;
-                }
-            }
-        }
-    }
-    return 1;
 }
 
 // TP Reset every cell in the playfield to empty.
@@ -186,7 +187,11 @@ void draw_field(void) {
     for (int y = 0; y < HEIGHT; y++) {
         move(y, 0);
         for (int x = 0; x < WIDTH; x++) {
-            addch(field[y][x] ? '#' : '.');
+            if (field[y][x]){
+                printw("%s#%s", colors[field[y][x] - 1], RESET); //JT - print colored block
+            } else {
+                addch('.');
+            }
         }
     }
 }
@@ -203,33 +208,26 @@ void init_game(void) {
 }
 
 int main(void) {
-    srand((unsigned)time(NULL));
+    srand((unsigned)time(NULL)); // If you don't use this the piece will be added in the same spot every run
     init_game();
 
-    // Randomize the piece to be added
-    int random_piece_index = rand() % (sizeof(piece) / sizeof(piece[0]));
-    int random_rotation = rand() % 4;
-
+    // TP Place the cube near the top center so the board can show a piece.
     int piece_width = 4;
     int piece_height = 4;
-    int origin_x = WIDTH / 2 - piece_width / 2;
-    int origin_y = 0;
 
-    if (can_place(origin_x, origin_y, piece[random_piece_index][random_rotation], piece_width, piece_height)) {
-        add_piece(origin_x, piece[random_piece_index][random_rotation], piece_width, piece_height);
-        printf("Test Passed\n");
-    } else {
-        printf("Test Failed\n");
-    }
+    while(1){
+        //JT - pick random piece type and rotation
+        int piece_type = rand() % 4;
+        int rotation = rand() % 4;
+        int origin_x = rand() % (WIDTH - piece_width + 1); // Ensure the piece fits horizontally
 
-    draw_field();
-    refresh();
-
-    // Main game loop
-    while (1) {
+        add_piece(origin_x, piece[piece_type][rotation], piece_width, piece_height);
+    
+        draw_field();
+        refresh();
         usleep(100000);
     }
-
+    
     endwin();
     return 0;
 }
