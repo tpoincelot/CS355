@@ -9,21 +9,7 @@
 #define WIDTH 10
 #define HEIGHT 25
 
-// JT - adding in ANSI color codes for the tetris pieces
-#define RESET "\x1b[0m"
-#define RED "\x1b[31m"
-#define GREEN "\x1b[32m"
-#define YELLOW "\x1b[33m"
-#define BLUE "\x1b[34m"
-#define MAGENTA "\x1b[35m"
-#define CYAN "\x1b[36m"
-#define WHITE "\x1b[37m"
-
-#define RAND_MAX 9
-
-// JT - array of color strings
-const char *colors[] = {RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE};
-#define NUM_COLORS (sizeof(colors)/sizeof(colors[0]))
+#define NUM_COLORS 7
 
 // TP Field grid storing occupied cells (0 = empty, 1 = filled).
 static int field[HEIGHT][WIDTH];
@@ -188,7 +174,9 @@ void draw_field(void) {
         move(y, 0);
         for (int x = 0; x < WIDTH; x++) {
             if (field[y][x]){
-                printw("%s#%s", colors[field[y][x] - 1], RESET); //JT - print colored block
+                attron(COLOR_PAIR(field[y][x]));
+                addch('#');
+                attroff(COLOR_PAIR(field[y][x]));
             } else {
                 addch('.');
             }
@@ -197,6 +185,7 @@ void draw_field(void) {
 }
 
 // TP Initialize ncurses and configure the terminal for the game.
+//JT - add colors
 void init_game(void) {
     initscr();
     cbreak();
@@ -204,6 +193,14 @@ void init_game(void) {
     keypad(stdscr, TRUE);
     nodelay(stdscr, TRUE);
     curs_set(0);
+    start_color();
+    init_pair(1, COLOR_RED, COLOR_BLACK);
+    init_pair(2, COLOR_GREEN, COLOR_BLACK);
+    init_pair(3, COLOR_YELLOW, COLOR_BLACK);
+    init_pair(4, COLOR_BLUE, COLOR_BLACK);
+    init_pair(5, COLOR_MAGENTA, COLOR_BLACK);
+    init_pair(6, COLOR_CYAN, COLOR_BLACK);
+    init_pair(7, COLOR_WHITE, COLOR_BLACK);
     init_field();
 }
 
@@ -225,9 +222,9 @@ int main(void) {
     
         draw_field();
         refresh();
-        usleep(100000);
+        usleep(500000);
     }
-    
+
     endwin();
     return 0;
 }
