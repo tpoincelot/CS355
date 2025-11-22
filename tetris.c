@@ -127,40 +127,51 @@ static const int piece[][4][4][4] = {
 //     1, 1
 // };
 
+//JT - track an active piece
+typedef struct {
+    int type;
+    int rotation;
+    int x;
+    int y;
+    int color;
+} active_piece;
+
+static active_piece current;
+
 // TP Function that adds shape into the top of the field. Adjusted to skip empty rows at the top.
 //JT - add random color to each new piece
-void add_piece(int origin_x, const int shape[4][4], int shape_width, int shape_height) {
-    int color_id = (rand() % NUM_COLORS) + 1; //JT - pick random color
+// void add_piece(int origin_x, const int shape[4][4], int shape_width, int shape_height) {
+//     int color_id = (rand() % NUM_COLORS) + 1; //JT - pick random color
 
-    int start_row = 0;
-    for (int r = 0; r < shape_height; r++) {
-        int is_empty = 1;
-        for (int c = 0; c < shape_width; c++) {
-            if (shape[r][c]) {
-                is_empty = 0;
-                break;
-            }
-        }
-        if (!is_empty) {
-            start_row = r;
-            break;
-        }
-    }
+//     int start_row = 0;
+//     for (int r = 0; r < shape_height; r++) {
+//         int is_empty = 1;
+//         for (int c = 0; c < shape_width; c++) {
+//             if (shape[r][c]) {
+//                 is_empty = 0;
+//                 break;
+//             }
+//         }
+//         if (!is_empty) {
+//             start_row = r;
+//             break;
+//         }
+//     }
 
-    // Place the piece on the field
-    for (int r = start_row; r < shape_height; r++) {
-        for (int c = 0; c < shape_width; c++) {
-            if (!shape[r][c]) {
-                continue;
-            }
-            int fx = origin_x + c;
-            int fy = r - start_row;
-            if (fx >= 0 && fx < WIDTH && fy >= 0 && fy < HEIGHT) {
-                field[fy][fx] = color_id; //JT - store color id
-            }
-        }
-    }
-}
+//     // Place the piece on the field
+//     for (int r = start_row; r < shape_height; r++) {
+//         for (int c = 0; c < shape_width; c++) {
+//             if (!shape[r][c]) {
+//                 continue;
+//             }
+//             int fx = origin_x + c;
+//             int fy = r - start_row;
+//             if (fx >= 0 && fx < WIDTH && fy >= 0 && fy < HEIGHT) {
+//                 field[fy][fx] = color_id; //JT - store color id
+//             }
+//         }
+//     }
+// }
 
 // TP Reset every cell in the playfield to empty.
 void init_field(void) {
@@ -168,6 +179,7 @@ void init_field(void) {
 }
 
 // TP Render the current playfield grid onto the terminal screen.
+//JT - also draw the active falling piece
 void draw_field(void) {
     clear();
     for (int y = 0; y < HEIGHT; y++) {
@@ -179,6 +191,23 @@ void draw_field(void) {
                 attroff(COLOR_PAIR(field[y][x]));
             } else {
                 addch('.');
+            }
+        }
+    }
+
+    // draw current falling piece
+    const int (*shape)[4] = piece[current.type][current.rotation];
+    for (int r = 0; r < 4; r++) {
+        for (int c = 0; c < 4; c++) {
+            if (shape[r][c]) {
+                int fx = current.x + c;
+                int fy = current.y + r;
+                if (fx >= 0 && fx < WIDTH && fy >= 0 && fy < HEIGHT) {
+                    move(fy, fx);
+                    attron(COLOR_PAIR(current.color));
+                    addch('#');
+                    attroff(COLOR_PAIR(current.color));
+                }
             }
         }
     }
@@ -205,21 +234,68 @@ void init_game(void) {
 }
 
 int main(void) {
-    srand((unsigned)time(NULL)); // If you don't use this the piece will be added in the same spot every run
+    srand((unsigned)time(NULL));
     init_game();
 
-    // TP Place the cube near the top center so the board can show a piece.
     int piece_width = 4;
     int piece_height = 4;
+    int has_piece = 0;
 
-    while(1){
-        //JT - pick random piece type and rotation
-        int piece_type = rand() % 4;
-        int rotation = rand() % 4;
-        int origin_x = rand() % (WIDTH - piece_width + 1); // Ensure the piece fits horizontally
+    while (1) {
+        if (!has_piece) {
+            // spawn new piece
+            current.type = rand() % 4;
+            current.rotation = rand() % 4;
+            current.x = rand() % (WIDTH - piece_width + 1);
+            current.y = 0;
+            current.color = (rand() % NUM_COLORS) + 1;
+            const int (*shape)[4] = piece [current.type][current.rotation];
+            int top_row = 4;
+            for (int r = 0; r < piece_height; r++){
+                for (int c = 0; c < piece_width; c++){
+                    if (shape[r][c]){
+                        if (r < top_row){
+                            top_row = r;
+                        }
+                    }
+                }
+            }
+            current.y = -top_row;
+            has_piece = 1;
+        }
 
-        add_piece(origin_x, piece[piece_type][rotation], piece_width, piece_height);
-    
+        // check if moving down is possible
+        int can_move_down = 1;
+        const int (*shape)[4] = piece[current.type][current.rotation];
+        for (int r = 0; r < piece_height; r++) {
+            for (int c = 0; c < piece_width; c++) {
+                if (shape[r][c]) {
+                    int fy = current.y + r + 1; // look ahead
+                    if (fy >= HEIGHT) {
+                        can_move_down = 0;
+                    }
+                }
+            }
+        }
+
+        if (can_move_down) {
+            current.y++; // safe to move
+        } else {
+            // lock piece into field at current position
+            for (int r = 0; r < piece_height; r++) {
+                for (int c = 0; c < piece_width; c++) {
+                    if (shape[r][c]) {
+                        int fx = current.x + c;
+                        int fy = current.y + r;
+                        if (fx >= 0 && fx < WIDTH && fy >= 0 && fy < HEIGHT) {
+                            field[fy][fx] = current.color;
+                        }
+                    }
+                }
+            }
+            has_piece = 0; // spawn next piece
+        }
+
         draw_field();
         refresh();
         usleep(500000);
