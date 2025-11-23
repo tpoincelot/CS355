@@ -261,24 +261,11 @@ int main(void) {
 
     while (1) {
         if (!has_piece) {
-            // spawn new piece
             current.type = rand() % 4;
             current.rotation = rand() % 4;
-            current.x = rand() % (WIDTH - piece_width + 1);
+            current.x = WIDTH / 2 - piece_width / 2;
             current.y = 0;
             current.color = (rand() % NUM_COLORS) + 1;
-            const int (*shape)[4] = piece[current.type][current.rotation];
-            int top_row = 4;
-            for (int r = 0; r < piece_height; r++) {
-                for (int c = 0; c < piece_width; c++) {
-                    if (shape[r][c]) {
-                        if (r < top_row) {
-                            top_row = r;
-                        }
-                    }
-                }
-            }
-            current.y = -top_row;
             has_piece = 1;
         }
 
@@ -301,7 +288,7 @@ int main(void) {
                         current.y++;
                     }
                     break;
-                case 'r':
+                case ' ':
                     {
                         int new_rotation = (current.rotation + 1) % 4;
                         const int (*new_shape)[4] = piece[current.type][new_rotation];
