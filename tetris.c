@@ -11,6 +11,8 @@
 
 #define NUM_COLORS 7
 
+static int score = 0; // Global variable to track the score
+
 // TP Field grid storing occupied cells (0 = empty, 1 = filled).
 static int field[HEIGHT][WIDTH];
 
@@ -121,6 +123,8 @@ static const int piece[][4][4][4] = {
     }
 };
 
+
+
 // TP Sample 2×2 piece definition.
 // static const int cube[] = {
 //     1, 1,
@@ -178,6 +182,38 @@ void init_field(void) {
     memset(field, 0, sizeof(field));
 }
 
+// Clear full rows and update the score
+void clear_full_rows(void) {
+    int rows_cleared = 0;
+
+    for (int y = 0; y < HEIGHT; y++) {
+        int full = 1;
+        for (int x = 0; x < WIDTH; x++) {
+            if (!field[y][x]) {
+                full = 0;
+                break;
+            }
+        }
+
+        if (full) {
+            rows_cleared++;
+            for (int r = y; r > 0; r--) {
+                for (int c = 0; c < WIDTH; c++) {
+                    field[r][c] = field[r - 1][c];
+                }
+            }
+
+            for (int c = 0; c < WIDTH; c++) {
+                field[0][c] = 0;
+            }
+        }
+    }
+
+    if (rows_cleared > 0) {
+        score += rows_cleared * 100; // 100 points per row
+    }
+}
+
 // TP Render the current playfield grid onto the terminal screen.
 //JT - also draw the active falling piece
 void draw_field(void) {
@@ -195,7 +231,6 @@ void draw_field(void) {
         }
     }
 
-    // draw current falling piece
     const int (*shape)[4] = piece[current.type][current.rotation];
     for (int r = 0; r < 4; r++) {
         for (int c = 0; c < 4; c++) {
@@ -211,6 +246,9 @@ void draw_field(void) {
             }
         }
     }
+
+    move(HEIGHT, 0);
+    printw("Score: %d", score);
 }
 
 //JT - check if a piece can be placed at a given position
@@ -259,6 +297,10 @@ int main(void) {
     int piece_height = 4;
     int has_piece = 0;
 
+    const int refresh_rate = 50000; // Refresh every 50ms (20 FPS)
+    const int fall_frames = 10;    // Piece falls every 10 frames (500ms at 50ms per frame)
+    int frame_counter = 0;
+
     while (1) {
         if (!has_piece) {
             current.type = rand() % 4;
@@ -300,39 +342,45 @@ int main(void) {
             }
         }
 
-        int can_move_down = 1;
-        const int (*shape)[4] = piece[current.type][current.rotation];
-        for (int r = 0; r < piece_height; r++) {
-            for (int c = 0; c < piece_width; c++) {
-                if (shape[r][c]) {
-                    int fy = current.y + r + 1;
-                    if (fy >= HEIGHT || (field[fy][current.x + c])) {
-                        can_move_down = 0;
-                    }
-                }
-            }
-        }
-
-        if (can_move_down) {
-            current.y++;
-        } else {
+        if (frame_counter >= fall_frames) {
+            int can_move_down = 1;
+            const int (*shape)[4] = piece[current.type][current.rotation];
             for (int r = 0; r < piece_height; r++) {
                 for (int c = 0; c < piece_width; c++) {
                     if (shape[r][c]) {
-                        int fx = current.x + c;
-                        int fy = current.y + r;
-                        if (fx >= 0 && fx < WIDTH && fy >= 0 && fy < HEIGHT) {
-                            field[fy][fx] = current.color;
+                        int fy = current.y + r + 1;
+                        if (fy >= HEIGHT || (field[fy][current.x + c])) {
+                            can_move_down = 0;
                         }
                     }
                 }
             }
-            has_piece = 0;
+
+            if (can_move_down) {
+                current.y++;
+            } else {
+                for (int r = 0; r < piece_height; r++) {
+                    for (int c = 0; c < piece_width; c++) {
+                        if (shape[r][c]) {
+                            int fx = current.x + c;
+                            int fy = current.y + r;
+                            if (fx >= 0 && fx < WIDTH && fy >= 0 && fy < HEIGHT) {
+                                field[fy][fx] = current.color;
+                            }
+                        }
+                    }
+                }
+                clear_full_rows(); //JT - clear rows after locking the piece
+                has_piece = 0;
+            }
+
+            frame_counter = 0; // Reset the frame counter after the piece falls
         }
 
         draw_field();
         refresh();
-        usleep(500000);
+        usleep(refresh_rate);
+        frame_counter++;
     }
 
     endwin();
