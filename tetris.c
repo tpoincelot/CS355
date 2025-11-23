@@ -300,98 +300,162 @@ void init_game(void) {
     init_field();
 }
 
+void start_screen(void) {
+    clear();
+    char msg1[] = "Welcome to TP and JT Tetris Game";
+    char msg2[] = "Press ENTER to Start Game";
+    mvprintw(LINES / 2 - 1, (COLS - strlen(msg1)) / 2, "%s", msg1);
+    mvprintw(LINES / 2, (COLS - strlen(msg2)) / 2, "%s", msg2);
+    refresh();
+    nodelay(stdscr, FALSE);
+    while (1) {
+        int ch = getch();
+        if (ch == '\n' || ch == KEY_ENTER) break;
+    }
+    nodelay(stdscr, TRUE);
+}
+
+int game_overdose(void) {
+    clear();
+    char msg1[] = "GAME OVER!!";
+    char msg2[] = "Play again? (y/n)";
+    mvprintw(LINES / 2 - 1, (COLS - strlen(msg1)) / 2, "%s", msg1);
+    mvprintw(LINES / 2, (COLS - strlen(msg2)) / 2, "%s", msg2);
+    refresh();
+
+    nodelay(stdscr, FALSE);
+    while (1) {
+        int ch = getch();
+        if (ch == 'y' || ch == 'Y') {
+            nodelay(stdscr, TRUE);
+            return 1; // restart
+        } else if (ch == 'n' || ch == 'N') {
+            return 0; // quit
+        }
+    }
+}
+
 int main(void) {
     srand((unsigned)time(NULL));
     init_game();
+    start_screen();
 
     int piece_width = 4;
     int piece_height = 4;
-    int has_piece = 0;
-
-    const int refresh_rate = 50000; // Refresh every 50ms (20 FPS)
-    const int fall_frames = 10;    // Piece falls every 10 frames (500ms at 50ms per frame)
+    const int refresh_rate = 50000; // 50ms
+    const int fall_frames = 10;     // piece falls every 10 frames
     int frame_counter = 0;
 
     while (1) {
-        if (!has_piece) {
-            current.type = rand() % 4;
-            current.rotation = rand() % 4;
-            current.x = WIDTH / 2 - piece_width / 2;
-            current.y = 0;
-            current.color = (rand() % NUM_COLORS) + 1;
-            has_piece = 1;
-        }
+        int has_piece = 0;
+        init_field();
 
-        int ch = getch();
-        if (ch != ERR) {
-            const int (*shape)[4] = piece[current.type][current.rotation];
-            switch (ch) {
-                case KEY_LEFT:
-                    if (can_place(current.x - 1, current.y, shape, piece_width, piece_height)) {
-                        current.x--;
-                    }
-                    break;
-                case KEY_RIGHT:
-                    if (can_place(current.x + 1, current.y, shape, piece_width, piece_height)) {
-                        current.x++;
-                    }
-                    break;
-                case KEY_DOWN:
-                    if (can_place(current.x, current.y + 1, shape, piece_width, piece_height)) {
-                        current.y++;
-                    }
-                    break;
-                case ' ':
-                    {
-                        int new_rotation = (current.rotation + 1) % 4;
-                        const int (*new_shape)[4] = piece[current.type][new_rotation];
-                        if (can_place(current.x, current.y, new_shape, piece_width, piece_height)) {
-                            current.rotation = new_rotation;
-                        }
-                    }
-                    break;
+        while (1) {
+            if (!has_piece) {
+                current.type = rand() % 4;
+                current.rotation = rand() % 4;
+                current.x = WIDTH / 2 - piece_width / 2;
+                current.y = 0;
+                current.color = (rand() % NUM_COLORS) + 1;
+                has_piece = 1;
             }
-        }
 
-        if (frame_counter >= fall_frames) {
-            int can_move_down = 1;
-            const int (*shape)[4] = piece[current.type][current.rotation];
-            for (int r = 0; r < piece_height; r++) {
-                for (int c = 0; c < piece_width; c++) {
-                    if (shape[r][c]) {
-                        int fy = current.y + r + 1;
-                        if (fy >= HEIGHT || (field[fy][current.x + c])) {
-                            can_move_down = 0;
+            int ch = getch();
+            if (ch != ERR) {
+                const int (*shape)[4] = piece[current.type][current.rotation];
+                switch (ch) {
+                    case KEY_LEFT:
+                        if (can_place(current.x - 1, current.y, shape, piece_width, piece_height)) {
+                            current.x--;
                         }
-                    }
+                        break;
+                    case KEY_RIGHT:
+                        if (can_place(current.x + 1, current.y, shape, piece_width, piece_height)) {
+                            current.x++;
+                        }
+                        break;
+                    case KEY_DOWN:
+                        if (can_place(current.x, current.y + 1, shape, piece_width, piece_height)) {
+                            current.y++;
+                        }
+                        break;
+                    case ' ':
+                        {
+                            int new_rotation = (current.rotation + 1) % 4;
+                            const int (*new_shape)[4] = piece[current.type][new_rotation];
+                            if (can_place(current.x, current.y, new_shape, piece_width, piece_height)) {
+                                current.rotation = new_rotation;
+                            }
+                        }
+                        break;
                 }
             }
 
-            if (can_move_down) {
-                current.y++;
-            } else {
+            if (frame_counter >= fall_frames) {
+                int can_move_down = 1;
+                const int (*shape)[4] = piece[current.type][current.rotation];
                 for (int r = 0; r < piece_height; r++) {
                     for (int c = 0; c < piece_width; c++) {
                         if (shape[r][c]) {
-                            int fx = current.x + c;
-                            int fy = current.y + r;
-                            if (fx >= 0 && fx < WIDTH && fy >= 0 && fy < HEIGHT) {
-                                field[fy][fx] = current.color;
+                            int fy = current.y + r + 1;
+                            if (fy >= HEIGHT || (field[fy][current.x + c])) {
+                                can_move_down = 0;
                             }
                         }
                     }
                 }
-                clear_full_rows(); //JT - clear rows after locking the piece
-                has_piece = 0;
+
+                if (can_move_down) {
+                    current.y++;
+                } else {
+                    // lock piece into field
+                    for (int r = 0; r < piece_height; r++) {
+                        for (int c = 0; c < piece_width; c++) {
+                            if (shape[r][c]) {
+                                int fx = current.x + c;
+                                int fy = current.y + r;
+                                if (fx >= 0 && fx < WIDTH && fy >= 0 && fy < HEIGHT) {
+                                    field[fy][fx] = current.color;
+                                }
+                            }
+                        }
+                    }
+
+                    // check for game over (piece at line 0)
+                    int game_over_flag = 0;
+                    for (int r = 0; r < piece_height; r++) {
+                        for (int c = 0; c < piece_width; c++) {
+                            if (shape[r][c]) {
+                                int fy = current.y + r;
+                                if (fy == 0) {
+                                    game_over_flag = 1;
+                                }
+                            }
+                        }
+                    }
+
+                    if (game_over_flag) {
+                        if (game_overdose()) {
+                            init_field();
+                            has_piece = 0;
+                            continue;   // restart loop
+                        } else {
+                            endwin();
+                            return 0;   // exit program
+                        }
+                    }
+                    clear_full_rows(); //JT - clear rows after locking the piece
+                    has_piece = 0; // spawn next piece
+                }
+
+                frame_counter = 0; // reset frame counter
             }
 
-            frame_counter = 0; // Reset the frame counter after the piece falls
+            draw_field();
+            refresh();
+            usleep(refresh_rate);
+            frame_counter++;
         }
-
-        draw_field();
-        refresh();
-        usleep(refresh_rate);
-        frame_counter++;
     }
 
     endwin();
