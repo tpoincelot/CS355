@@ -213,6 +213,24 @@ void draw_field(void) {
     }
 }
 
+//JT - check if a piece can be placed at a given position
+
+int can_place(int x, int y, const int shape [4][4], int shape_width, int shape_height){
+    for (int r = 0; r < shape_height; r++){
+        for (int c = 0; c < shape_width; c++){
+            if (shape[r][c]){
+                int fx = x + c;
+                int fy = y + r;
+
+                if (fx < 0 || fx >= WIDTH || fy < 0 || fy >= HEIGHT || field[fy][fx]){
+                    return 0;
+                }
+            }
+        }
+    }
+    return 1;
+}
+
 // TP Initialize ncurses and configure the terminal for the game.
 //JT - add colors
 void init_game(void) {
