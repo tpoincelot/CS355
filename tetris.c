@@ -218,15 +218,25 @@ void clear_full_rows(void) {
 //JT - also draw the active falling piece
 void draw_field(void) {
     clear();
+
+    //center game
+    int cell_width = 2;
+    int board_width = WIDTH * cell_width;
+    int board_height = HEIGHT;
+    int x_offset = (COLS - board_width) / 2;
+    int y_offset = (LINES - board_height) / 2;
+
     for (int y = 0; y < HEIGHT; y++) {
-        move(y, 0);
         for (int x = 0; x < WIDTH; x++) {
+            move(y_offset + y, x_offset + x * cell_width);
             if (field[y][x]){
                 attron(COLOR_PAIR(field[y][x]));
                 addch('#');
+                addch(' ');
                 attroff(COLOR_PAIR(field[y][x]));
             } else {
                 addch('.');
+                addch(' ');
             }
         }
     }
@@ -238,9 +248,10 @@ void draw_field(void) {
                 int fx = current.x + c;
                 int fy = current.y + r;
                 if (fx >= 0 && fx < WIDTH && fy >= 0 && fy < HEIGHT) {
-                    move(fy, fx);
+                    move(y_offset + fy, x_offset + fx * cell_width);
                     attron(COLOR_PAIR(current.color));
                     addch('#');
+                    addch(' ');
                     attroff(COLOR_PAIR(current.color));
                 }
             }
