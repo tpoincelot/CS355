@@ -267,12 +267,12 @@ int main(void) {
             current.x = rand() % (WIDTH - piece_width + 1);
             current.y = 0;
             current.color = (rand() % NUM_COLORS) + 1;
-            const int (*shape)[4] = piece [current.type][current.rotation];
+            const int (*shape)[4] = piece[current.type][current.rotation];
             int top_row = 4;
-            for (int r = 0; r < piece_height; r++){
-                for (int c = 0; c < piece_width; c++){
-                    if (shape[r][c]){
-                        if (r < top_row){
+            for (int r = 0; r < piece_height; r++) {
+                for (int c = 0; c < piece_width; c++) {
+                    if (shape[r][c]) {
+                        if (r < top_row) {
                             top_row = r;
                         }
                     }
@@ -282,14 +282,44 @@ int main(void) {
             has_piece = 1;
         }
 
-        // check if moving down is possible
+        int ch = getch();
+        if (ch != ERR) {
+            const int (*shape)[4] = piece[current.type][current.rotation];
+            switch (ch) {
+                case KEY_LEFT:
+                    if (can_place(current.x - 1, current.y, shape, piece_width, piece_height)) {
+                        current.x--;
+                    }
+                    break;
+                case KEY_RIGHT:
+                    if (can_place(current.x + 1, current.y, shape, piece_width, piece_height)) {
+                        current.x++;
+                    }
+                    break;
+                case KEY_DOWN:
+                    if (can_place(current.x, current.y + 1, shape, piece_width, piece_height)) {
+                        current.y++;
+                    }
+                    break;
+                case 'r':
+                    {
+                        int new_rotation = (current.rotation + 1) % 4;
+                        const int (*new_shape)[4] = piece[current.type][new_rotation];
+                        if (can_place(current.x, current.y, new_shape, piece_width, piece_height)) {
+                            current.rotation = new_rotation;
+                        }
+                    }
+                    break;
+            }
+        }
+
         int can_move_down = 1;
         const int (*shape)[4] = piece[current.type][current.rotation];
         for (int r = 0; r < piece_height; r++) {
             for (int c = 0; c < piece_width; c++) {
                 if (shape[r][c]) {
-                    int fy = current.y + r + 1; // look ahead
-                    if (fy >= HEIGHT) {
+                    int fy = current.y + r + 1;
+                    if (fy >= HEIGHT || (field[fy][current.x + c])) {
                         can_move_down = 0;
                     }
                 }
@@ -297,9 +327,8 @@ int main(void) {
         }
 
         if (can_move_down) {
-            current.y++; // safe to move
+            current.y++;
         } else {
-            // lock piece into field at current position
             for (int r = 0; r < piece_height; r++) {
                 for (int c = 0; c < piece_width; c++) {
                     if (shape[r][c]) {
@@ -311,7 +340,7 @@ int main(void) {
                     }
                 }
             }
-            has_piece = 0; // spawn next piece
+            has_piece = 0;
         }
 
         draw_field();
