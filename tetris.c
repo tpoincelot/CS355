@@ -177,14 +177,14 @@ void clear_completed_rows(void) {
 void render_field(void) {
     clear();
 
-    // Center game
+    // JT Center game
     int cell_width = 2;
     int board_width = FIELD_WIDTH * cell_width;
     int board_height = FIELD_HEIGHT;
     int x_offset = (COLS - board_width) / 2;
     int y_offset = (LINES - board_height) / 2;
 
-    // Draw the border
+    // TP Draw the border
     for (int y = 0; y <= FIELD_HEIGHT; y++) {
         mvprintw(y_offset + y, x_offset - 1, "|"); // Left border
         mvprintw(y_offset + y, x_offset + FIELD_WIDTH * cell_width, "|"); // Right border
