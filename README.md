@@ -40,3 +40,8 @@ Tetris Project for CS355 coded in C
    - [x] Randomly choose piece type when spawning a new piece. (Jimmy)
 7. **Final touches**
    - [x] Fix spacing of play field. (Jimmy)
+   - [x] Fix point system reset when starting a new game. (Jimmy)
+   - [x] Added to display level. (Jimmy)
+   - [x] Added point scored in the game over screen. (Jimmy)
+   - [x] Added start screen. (Jimmy)
+   - [x] Enhanced start screen. (Thomas)

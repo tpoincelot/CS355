@@ -228,9 +228,14 @@ void render_field(void) {
         }
     }
 
-    // Display the score
-    move(FIELD_HEIGHT + y_offset + 1, x_offset);
+    // JT Add level system
+    int level = (g_score / 500) + 1;
+
+    // Display the score and level
+    move(FIELD_HEIGHT + y_offset + 2, x_offset);
     printw("Score: %d", g_score);
+    move (FIELD_HEIGHT + y_offset + 1, x_offset);
+    printw("Level: %d", level);
 }
 
 // JT check if a piece can be placed at a given position
@@ -303,7 +308,7 @@ const char *tetris_logo[] = {
     "      TTTTTTTTTTT      EEEEEEEEEEEEEEEEEEEEEE      TTTTTTTTTTT      RRRRRRRR     RRRRRRRIIIIIIIIII SSSSSSSSSSSSSSS   "
     };
 
-    const char *by_line = "by Thomas and Jimmy";
+    const char *by_line = "By The Front Seaters";
 
     int logo_height = sizeof(tetris_logo) / sizeof(tetris_logo[0]);
     int logo_width = strlen(tetris_logo[0]);
@@ -338,9 +343,12 @@ const char *tetris_logo[] = {
 int game_over(void) {
     clear();
     char msg1[] = "GAME OVER!!";
+    char score_msg[50];
+    snprintf(score_msg, sizeof(score_msg), "Final Score: %d", g_score);
     char msg2[] = "Play again? (y/n)";
-    mvprintw(LINES / 2 - 1, (COLS - strlen(msg1)) / 2, "%s", msg1);
-    mvprintw(LINES / 2, (COLS - strlen(msg2)) / 2, "%s", msg2);
+    mvprintw(LINES / 2 - 2, (COLS - strlen(msg1)) / 2, "%s", msg1);
+    mvprintw(LINES / 2, (COLS - strlen(score_msg)) / 2, "%s", score_msg);
+    mvprintw(LINES / 2 + 2, (COLS - strlen(msg2)) / 2, "%s", msg2);
     refresh();
 
     nodelay(stdscr, FALSE);
@@ -400,6 +408,7 @@ int main(void) {
     while (1) {
         int has_piece = 0;
         initialize_field();
+        g_score = 0; // JT start score at 0
 
         while (1) {
             if (!has_piece) {
@@ -413,6 +422,7 @@ int main(void) {
                 if (!can_spawn_piece(shape, g_current_piece.x, g_current_piece.y, piece_width, piece_height)) {
                     if (game_over()) {
                         initialize_field();
+                        g_score = 0; //JT Reset score when restarting after game over
                         has_piece = 0;
                         continue;
                     } else {
@@ -503,6 +513,7 @@ int main(void) {
                     if (game_over_flag) {
                         if (game_over()) {
                             initialize_field();
+                            g_score = 0; //JT Reset score after game over
                             has_piece = 0;
                             continue;   // restart loop
                         } else {
