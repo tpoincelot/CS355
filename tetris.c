@@ -285,6 +285,7 @@ void init_game(void) {
     signal(SIGWINCH, handle_resize);
 }
 
+// TP and JT Display the start screen and wait for user to press ENTER.
 void start_screen(void) {
     clear();
 
@@ -340,6 +341,7 @@ const char *tetris_logo[] = {
     nodelay(stdscr, TRUE);
 }
 
+// JT Display game over screen and ask to play again
 int game_over(void) {
     clear();
     char msg1[] = "GAME OVER!!";
@@ -412,6 +414,7 @@ int main(void) {
 
         while (1) {
             if (!has_piece) {
+                //JT spawn new piece
                 g_current_piece.type = rand() % 4;
                 g_current_piece.rotation = rand() % 4;
                 g_current_piece.x = FIELD_WIDTH / 2 - piece_width / 2;
@@ -433,7 +436,7 @@ int main(void) {
 
                 has_piece = 1;
             }
-
+            // TP Handle user input for moving and rotating the piece
             int ch = getch();
             if (ch != ERR) {
                 const int (*shape)[4] = g_pieces[g_current_piece.type][g_current_piece.rotation];
@@ -497,7 +500,7 @@ int main(void) {
                         }
                     }
 
-                    // check for game over (piece at line 0)
+                    // JT check for game over (piece at line 0)
                     int game_over_flag = 0;
                     for (int r = 0; r < piece_height; r++) {
                         for (int c = 0; c < piece_width; c++) {
