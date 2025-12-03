@@ -121,6 +121,32 @@ static const int g_pieces[][4][4][4] = {
             {1, 0, 0, 0},
             {0, 0, 0, 0}
         }
+    },
+    { // Z shape
+        {
+            {0, 1, 1, 0},
+            {1, 1, 0, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}
+        },
+        {
+            {0, 1, 0, 0},
+            {0, 1, 1, 0},
+            {0, 0, 1, 0},
+            {0, 0, 0, 0}
+        },
+        {
+            {0, 0, 0, 0},
+            {0, 1, 1, 0},
+            {1, 1, 0, 0},
+            {0, 0, 0, 0}
+        },
+        {
+            {1, 0, 0, 0},
+            {1, 1, 0, 0},
+            {0, 1, 0, 0},
+            {0, 0, 0, 0}
+        }
     }
 };
 
@@ -415,7 +441,7 @@ int main(void) {
         while (1) {
             if (!has_piece) {
                 //JT spawn new piece
-                g_current_piece.type = rand() % 4;
+                g_current_piece.type = rand() % 5;
                 g_current_piece.rotation = rand() % 4;
                 g_current_piece.x = FIELD_WIDTH / 2 - piece_width / 2;
                 g_current_piece.y = 0;
