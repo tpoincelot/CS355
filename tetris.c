@@ -12,7 +12,10 @@
 
 #define NUM_COLORS 7
 
+// TP track score, lines cleared, and game mode
 static int g_score = 0;
+static int g_lines_cleared = 0;
+static int g_game_mode = 0;
 
 // TP Field grid storing occupied cells (0 = empty, 1 = filled).
 static int g_field[FIELD_HEIGHT][FIELD_WIDTH];
@@ -194,7 +197,8 @@ void clear_completed_rows(void) {
     }
 
     if (rows_cleared > 0) {
-        g_score += rows_cleared * 100; // 100 points per row
+        g_score += rows_cleared * 100;
+        g_lines_cleared += rows_cleared;
     }
 }
 
@@ -262,6 +266,14 @@ void render_field(void) {
     printw("Score: %d", g_score);
     move (FIELD_HEIGHT + y_offset + 1, x_offset);
     printw("Level: %d", level);
+
+    // TP Display lines cleared
+    move(FIELD_HEIGHT + y_offset + 3, x_offset);
+    if (g_game_mode == 1) {
+        printw("Lines: %d / 20", g_lines_cleared);
+    } else {
+        printw("Lines: %d", g_lines_cleared);
+    }
 }
 
 // JT check if a piece can be placed at a given position
@@ -337,6 +349,8 @@ const char *tetris_logo[] = {
 
     const char *by_line = "By The Front Seaters";
 
+
+
     int logo_height = sizeof(tetris_logo) / sizeof(tetris_logo[0]);
     int logo_width = strlen(tetris_logo[0]);
     int screen_center_y = LINES / 2 - logo_height / 2;
@@ -354,10 +368,6 @@ const char *tetris_logo[] = {
     const char *start_msg = "Press ENTER to Start Game";
     mvprintw(screen_center_y + logo_height + 3, (COLS - strlen(start_msg)) / 2, "%s", start_msg);
 
-    // char msg1[] = "Welcome to TP and JT Tetris Game";
-    // char msg2[] = "Press ENTER to Start Game";
-    // mvprintw(LINES / 2 - 1, (COLS - strlen(msg1)) / 2, "%s", msg1);
-    // mvprintw(LINES / 2, (COLS - strlen(msg2)) / 2, "%s", msg2);
     refresh();
     nodelay(stdscr, FALSE);
     while (1) {
@@ -367,10 +377,68 @@ const char *tetris_logo[] = {
     nodelay(stdscr, TRUE);
 }
 
+// Select game mode: Endless or Standard
+int select_game_mode(void) {
+    int selected = 0;
+    nodelay(stdscr, FALSE);
+    while(1) {
+        clear();
+        int mid_y = LINES / 2;
+        int mid_x = COLS / 2;
+        
+        mvprintw(mid_y - 4, mid_x - 10, "Select Game Mode:");
+        
+        if (selected == 0) attron(A_REVERSE);
+        mvprintw(mid_y - 1, mid_x - 5, " Endless ");
+        if (selected == 0) attroff(A_REVERSE);
+
+        if (selected == 1) attron(A_REVERSE);
+        mvprintw(mid_y + 1, mid_x - 5, " Standard ");
+        if (selected == 1) attroff(A_REVERSE);
+        
+        mvprintw(mid_y + 2, mid_x - 12, "(Win at 20 lines)");
+
+        mvprintw(mid_y + 5, mid_x - 15, "Use UP/DOWN to select");
+        mvprintw(mid_y + 6, mid_x - 15, "Press ENTER to confirm");
+        
+        refresh();
+        int ch = getch();
+        if (ch == KEY_UP || ch == KEY_LEFT) selected = 0;
+        else if (ch == KEY_DOWN || ch == KEY_RIGHT) selected = 1;
+        else if (ch == '\n' || ch == KEY_ENTER) break;
+    }
+    nodelay(stdscr, TRUE);
+    return selected;
+}
+
 // JT Display game over screen and ask to play again
 int game_over(void) {
     clear();
     char msg1[] = "GAME OVER!!";
+    char score_msg[50];
+    snprintf(score_msg, sizeof(score_msg), "Final Score: %d", g_score);
+    char msg2[] = "Play again? (y/n)";
+    mvprintw(LINES / 2 - 2, (COLS - strlen(msg1)) / 2, "%s", msg1);
+    mvprintw(LINES / 2, (COLS - strlen(score_msg)) / 2, "%s", score_msg);
+    mvprintw(LINES / 2 + 2, (COLS - strlen(msg2)) / 2, "%s", msg2);
+    refresh();
+
+    nodelay(stdscr, FALSE);
+    while (1) {
+        int ch = getch();
+        if (ch == 'y' || ch == 'Y') {
+            nodelay(stdscr, TRUE);
+            return 1; // restart
+        } else if (ch == 'n' || ch == 'N') {
+            return 0; // quit
+        }
+    }
+}
+
+// Display game win screen
+int game_win(void) {
+    clear();
+    char msg1[] = "YOU WIN!!";
     char score_msg[50];
     snprintf(score_msg, sizeof(score_msg), "Final Score: %d", g_score);
     char msg2[] = "Play again? (y/n)";
@@ -434,9 +502,12 @@ int main(void) {
     int frame_counter = 0;
 
     while (1) {
+        g_game_mode = select_game_mode();
+
         int has_piece = 0;
         initialize_field();
         g_score = 0; // JT start score at 0
+        g_lines_cleared = 0;
 
         while (1) {
             if (!has_piece) {
@@ -450,10 +521,7 @@ int main(void) {
                 const int (*shape)[4] = g_pieces[g_current_piece.type][g_current_piece.rotation];
                 if (!can_spawn_piece(shape, g_current_piece.x, g_current_piece.y, piece_width, piece_height)) {
                     if (game_over()) {
-                        initialize_field();
-                        g_score = 0; //JT Reset score when restarting after game over
-                        has_piece = 0;
-                        continue;
+                        break; // Restart outer loop to select mode again
                     } else {
                         endwin();
                         return 0;
@@ -541,16 +609,24 @@ int main(void) {
 
                     if (game_over_flag) {
                         if (game_over()) {
-                            initialize_field();
-                            g_score = 0; //JT Reset score after game over
-                            has_piece = 0;
-                            continue;   // restart loop
+                            break; // Restart outer loop
                         } else {
                             endwin();
                             return 0;   // exit program
                         }
                     }
                     clear_completed_rows(); //JT - clear rows after locking the piece
+                    
+                    // TP Check for win condition in Standard mode
+                    if (g_game_mode == 1 && g_lines_cleared >= 20) {
+                        if (game_win()) {
+                            break; // Restart outer loop
+                        } else {
+                            endwin();
+                            return 0;
+                        }
+                    }
+
                     has_piece = 0; // spawn next piece
                 }
 
