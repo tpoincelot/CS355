@@ -6,21 +6,22 @@
 #include <time.h>
 #include <signal.h>
 
-// TP Dimensions of the playing field (10 columns × 25 rows rendering grid).
+// TP Dimensions of the playing field (10 columns × 25 rows).
 #define FIELD_WIDTH 10
 #define FIELD_HEIGHT 25
 
+// JT Number of different colors for pieces
 #define NUM_COLORS 7
 
 // TP track score, lines cleared, and game mode
-static int g_score = 0;
-static int g_lines_cleared = 0;
-static int g_game_mode = 0;
+int g_score = 0;
+int g_lines_cleared = 0;
+int g_game_mode = 0;
 
 // TP Field grid storing occupied cells (0 = empty, 1 = filled).
-static int g_field[FIELD_HEIGHT][FIELD_WIDTH];
+int g_field[FIELD_HEIGHT][FIELD_WIDTH];
 
-static const int g_pieces[][4][4][4] = {
+const int g_pieces[][4][4][4] = {
     { // Cube
         {
             {0, 0, 0, 0},
@@ -162,7 +163,7 @@ typedef struct {
     int color;
 } active_piece;
 
-static active_piece g_current_piece;
+active_piece g_current_piece;
 
 // TP Reset every cell in the playfield to empty.
 void initialize_field(void) {
@@ -224,7 +225,7 @@ void render_field(void) {
         mvprintw(y_offset + FIELD_HEIGHT, x_offset - 1 + x, "-"); // Bottom border
     }
 
-    // Draw the game field
+    // TP Draw the game field
     for (int y = 0; y < FIELD_HEIGHT; y++) {
         for (int x = 0; x < FIELD_WIDTH; x++) {
             move(y_offset + y, x_offset + x * cell_width);
@@ -240,7 +241,7 @@ void render_field(void) {
         }
     }
 
-    // Draw the active piece
+    // JT Draw the active piece
     const int (*shape)[4] = g_pieces[g_current_piece.type][g_current_piece.rotation];
     for (int r = 0; r < 4; r++) {
         for (int c = 0; c < 4; c++) {
@@ -261,7 +262,7 @@ void render_field(void) {
     // JT Add level system
     int level = (g_score / 500) + 1;
 
-    // Display the score and level
+    // JT Display the score and level
     move(FIELD_HEIGHT + y_offset + 2, x_offset);
     printw("Score: %d", g_score);
     move (FIELD_HEIGHT + y_offset + 1, x_offset);
@@ -349,8 +350,6 @@ const char *tetris_logo[] = {
 
     const char *by_line = "By The Front Seaters";
 
-
-
     int logo_height = sizeof(tetris_logo) / sizeof(tetris_logo[0]);
     int logo_width = strlen(tetris_logo[0]);
     int screen_center_y = LINES / 2 - logo_height / 2;
@@ -377,7 +376,7 @@ const char *tetris_logo[] = {
     nodelay(stdscr, TRUE);
 }
 
-// Select game mode: Endless or Standard
+// TP Select game mode: Endless or Standard
 int select_game_mode(void) {
     int selected = 0;
     nodelay(stdscr, FALSE);
@@ -435,7 +434,7 @@ int game_over(void) {
     }
 }
 
-// Display game win screen
+// TP Display game win screen
 int game_win(void) {
     clear();
     char msg1[] = "YOU WIN!!";
@@ -459,24 +458,6 @@ int game_win(void) {
     }
 }
 
-// TP Check if a new piece can be spawned at the given position
-int can_spawn_piece(const int shape[4][4], int x, int y, int shape_width, int shape_height) {
-    for (int r = 0; r < shape_height; r++) {
-        for (int c = 0; c < shape_width; c++) {
-            if (shape[r][c]) {
-                int fx = x + c;
-                int fy = y + r;
-
-                // Check if the spawn position overlaps with existing blocks
-                if (fx >= 0 && fx < FIELD_WIDTH && fy >= 0 && fy < FIELD_HEIGHT && g_field[fy][fx]) {
-                    return 0;
-                }
-            }
-        }
-    }
-    return 1;
-}
-
 // TP Calculate fall speed based on score
 int calculate_fall_frames(int score) {
     int level = score / 500;
@@ -498,7 +479,6 @@ int main(void) {
     int piece_width = 4;
     int piece_height = 4;
     const int refresh_rate = 50000; // 50ms
-    const int fall_frames = 10;     // piece falls every 10 frames
     int frame_counter = 0;
 
     while (1) {
@@ -519,7 +499,7 @@ int main(void) {
                 g_current_piece.color = (rand() % NUM_COLORS) + 1;
 
                 const int (*shape)[4] = g_pieces[g_current_piece.type][g_current_piece.rotation];
-                if (!can_spawn_piece(shape, g_current_piece.x, g_current_piece.y, piece_width, piece_height)) {
+                if (!can_place(g_current_piece.x, g_current_piece.y, shape, piece_width, piece_height)) {
                     if (game_over()) {
                         break; // Restart outer loop to select mode again
                     } else {
